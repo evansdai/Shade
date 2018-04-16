@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from drawlines import draw_timecourse
 import numpy as np
 import seaborn as sns
+import statsmodels.api as sm
 
 
 class cluster_timecourse(object):
@@ -28,22 +29,48 @@ class cluster_timecourse(object):
         # self.df = hdf.read(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm.h5")[0].replace(np.nan, 0.0)
         self.X = self.df.as_matrix()
 
+        def add_polynormial(x, dim=1):
+            res = np.matrix(x).T
+            for i in range(dim + 1):
+                if i > 1:
+                    res = np.concatenate([res, np.matrix(x**(i)).T], axis=1)
+            res = sm.add_constant(res)
+            return res
+
+        def my_polyfit(x, y, dim):
+            X = add_polynormial(x, dim=dim)
+            est = sm.OLS(y, X)
+            est2 = est.fit()
+            log_p = np.log(est2.pvalues)
+            llf = est2.llf
+            par = est2.params
+            return np.append(llf, np.concatenate([log_p, par]))
+
         # quadratic features
         self.X2 = np.concatenate((self.X, self.X**2), axis=1)
+        self.fit = np.matrix([my_polyfit(x=np.array([0, 0, 5, 5, 15, 15, 30, 30]),
+                                         y=self.X[i, ], dim=1) for i in range(self.X.shape[0])])
 
-        self.fit2 = np.matrix([np.polyfit(x=np.array([0, 0, 5, 5, 15, 15, 30, 30]),
-                                          y=self.X[i, ], deg=2) for i in range(self.X.shape[0])])
+        self.fit2 = np.matrix([my_polyfit(x=np.array([0, 0, 5, 5, 15, 15, 30, 30]),
+                                          y=self.X[i, ], dim=2) for i in range(self.X.shape[0])])
 
-        self.fit = np.matrix([np.polyfit(x=np.array([0, 0, 5, 5, 15, 15, 30, 30]),
-                                         y=self.X[i, ], deg=1) for i in range(self.X.shape[0])])
-
-        self.fit3 = np.matrix([np.polyfit(x=np.array([0, 0, 5, 5, 15, 15, 30, 30]),
-                                          y=self.X[i, ], deg=3) for i in range(self.X.shape[0])])
+        self.fit3 = np.matrix([my_polyfit(x=np.array([0, 0, 5, 5, 15, 15, 30, 30]),
+                                          y=self.X[i, ], dim=3) for i in range(self.X.shape[0])])
 
         self.ratio = self.cal_ratio_of_change_of_mean(self.df).as_matrix()
 
-        self.all = np.concatenate((self.fit, self.ratio), axis=1)
-        # TODO normalization
+        self.rank = self.sort_mean(self.df)
+
+        self.all = np.concatenate((self.rank, self.fit), axis=1)
+
+        def normalize(array):
+            res = (array - np.min(array)) / (np.max(array) - np.min(array))
+            res[res == np.inf] = 0
+            res[res == -np.inf] = 0
+            return np.nan_to_num(res, copy=True)
+
+        self.all = np.concatenate([normalize(self.all[:, i])
+                                   for i in range(self.all.shape[1])], axis=1)
 
     def cal_ratio_of_change_of_mean(self, df):
         def divide_filter(s1, s2):
@@ -65,8 +92,20 @@ class cluster_timecourse(object):
         res = res.replace(np.inf, 0.0)
         res = res.replace(-np.inf, 0.0)
         res = res.replace(np.nan, 0.0)
-
         return res
+
+    def sort_mean(self, df):
+        l = df[['L1', 'L2']].mean(axis=1)
+        s5 = df[['S5_1', 'S5_2']].mean(axis=1)
+        s15 = df[['S15_1', 'S15_2']].mean(axis=1)
+        s30 = df[['S30_1', 'S30_2']].mean(axis=1)
+        res = []
+        for i in range(len(l)):
+            temp = {0: l.iloc[i], 5: s5.iloc[i],
+                    15: s15.iloc[i], 30: s30.iloc[i]}
+            res.append([i[0] for i in sorted(temp.items(), cmp=None,
+                                             key=lambda (k, v): v, reverse=False)])
+        return np.matrix(res)
 
     def cluster(self):
         # g = gm.GaussianMixture(n_components=self.num_c, covariance_type='full', tol=1e-3, reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
@@ -108,9 +147,8 @@ class cluster_timecourse(object):
 
 
 if __name__ == '__main__':
-    n_cluster = 16
+    n_cluster = 7
     ctc = cluster_timecourse(n_cluster)
     ctc.cluster()
     ctc.tsne(legend=True)
-
     ctc.draw_all_lines(savefile=None)
