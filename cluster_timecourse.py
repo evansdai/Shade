@@ -21,12 +21,23 @@ class cluster_timecourse(object):
         super(cluster_timecourse, self).__init__()
         self.num_c = num_c
         # all peptides
-        self.df = hdf.read(r"C:\Users\evans\Dropbox\Shade\raw\jiaoshenmehaoen.h5")[0]
-        self.df = self.df[self.df.columns[-8:]].replace(np.nan, 0.0)
+        # self.df = hdf.read(r"C:\Users\evans\Dropbox\Shade\raw\jiaoshenmehaoen.h5")[0]
+        # self.df = self.df[self.df.columns[-8:]].replace(np.nan, 0.0)
         # self.X = self.df[self.df.columns[-8:]].as_matrix()
 
         # significant peptides
-        # self.df = hdf.read(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm.h5")[0].replace(np.nan, 0.0)
+        self.df = hdf.read(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm.h5")[0].replace(np.nan, 0.0)
+        # TODO a abnormal value : 'iTESEQAAGDsDEGVDSITTGGR'
+        # L1       1.272
+        # L2       0.736
+        # S5_1     1.016
+        # S5_2     8.807
+        # S15_1    1.259
+        # S15_2    1.296
+        # S30_1    1.443
+        # S30_2    1.108
+        # Name: iTESEQAAGDsDEGVDSITTGGR, dtype: float64
+        self.df = self.df.drop('iTESEQAAGDsDEGVDSITTGGR')
         self.X = self.df.as_matrix()
 
         def add_polynormial(x, dim=1):
@@ -133,7 +144,9 @@ class cluster_timecourse(object):
 
     def draw_all_lines(self, savefile=None):
         cluster = self.dX_embedded
-        colors = sns.color_palette('husl', self.num_c).as_hex()
+        # TODO color palette
+        # colors = sns.color_palette('husl', self.num_c).as_hex()
+        colors = sns.color_palette().as_hex()
         for i in range(self.num_c):
             try:
                 dtc = draw_timecourse(
@@ -147,8 +160,11 @@ class cluster_timecourse(object):
 
 
 if __name__ == '__main__':
-    n_cluster = 7
+
+    n_cluster = 2
     ctc = cluster_timecourse(n_cluster)
     ctc.cluster()
     ctc.tsne(legend=True)
+    ctc.fig.savefig(r"C:\Users\evans\Dropbox\Shade\tsne\tsne.png", dpi=900)
     ctc.draw_all_lines(savefile=None)
+    ctc.dX_embedded.to_csv(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_5.csv")

@@ -16,8 +16,6 @@ def ati_merge_subtype(df):
     df.index = [i.split('.')[0] for i in df.index]
     return dup_index_to_unique(df, met='mean')
 
-# TODO 编写函数计算比值
-
 
 def cal_fold_change(df):
     ratio5 = (df[['S5_1', 'S5_2']].mean(axis=1)) / \
