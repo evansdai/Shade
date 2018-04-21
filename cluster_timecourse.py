@@ -12,6 +12,7 @@ from drawlines import draw_timecourse
 import numpy as np
 import seaborn as sns
 import statsmodels.api as sm
+from funcs.fig.color import green_blue2
 
 
 class cluster_timecourse(object):
@@ -26,7 +27,9 @@ class cluster_timecourse(object):
         # self.X = self.df[self.df.columns[-8:]].as_matrix()
 
         # significant peptides
-        self.df = hdf.read(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm.h5")[0].replace(np.nan, 0.0)
+        # self.df = hdf.read(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm_new_0.05.h5")[0].replace(np.nan, 0.0)
+        # TODO p = 0.05
+        self.df = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm_new_0.1.csv", index_col=0).replace(np.nan, 0.0)
         # TODO a abnormal value : 'iTESEQAAGDsDEGVDSITTGGR'
         # L1       1.272
         # L2       0.736
@@ -37,7 +40,7 @@ class cluster_timecourse(object):
         # S30_1    1.443
         # S30_2    1.108
         # Name: iTESEQAAGDsDEGVDSITTGGR, dtype: float64
-        self.df = self.df.drop('iTESEQAAGDsDEGVDSITTGGR')
+        # self.df = self.df.drop('iTESEQAAGDsDEGVDSITTGGR')
         self.X = self.df.as_matrix()
 
         def add_polynormial(x, dim=1):
@@ -146,14 +149,14 @@ class cluster_timecourse(object):
         cluster = self.dX_embedded
         # TODO color palette
         # colors = sns.color_palette('husl', self.num_c).as_hex()
-        colors = sns.color_palette().as_hex()
+        colors = green_blue2()  # .as_hex()
         for i in range(self.num_c):
             try:
                 dtc = draw_timecourse(
                     which=cluster.loc[cluster['label'] == i + 1].index.tolist())
                 dtc.draw(color=colors[i], legend_loc=None, rm_legend=True)
                 if savefile is not None:
-                    dtc.fig.get_figure().savefig(savefile.format(i))
+                    dtc.fig.get_figure().savefig(savefile.format(i), dpi=900)
                 del dtc
             except:
                 print i
@@ -165,6 +168,6 @@ if __name__ == '__main__':
     ctc = cluster_timecourse(n_cluster)
     ctc.cluster()
     ctc.tsne(legend=True)
-    ctc.fig.savefig(r"C:\Users\evans\Dropbox\Shade\tsne\tsne.png", dpi=900)
-    ctc.draw_all_lines(savefile=None)
-    ctc.dX_embedded.to_csv(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_5.csv")
+    ctc.fig.savefig(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_0.1.png", dpi=900)
+    ctc.draw_all_lines(savefile=r"C:\Users\evans\Dropbox\Shade\tsne\cluster{}_0.1.png")
+    ctc.dX_embedded.to_csv(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_2_0.1.csv")

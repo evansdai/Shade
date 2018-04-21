@@ -36,10 +36,11 @@ test4 = delete.del_row_with_zero_and_inf(test4)
 test4.columns = ['phosphorylation_FC', 'transcription_FC']
 p = plot(test4, drop_zero=True, log=True, spearman=True,
          savepath=None, summary=None, pointplot=False, postpros=None)
+
 p.savefig('fkjdslf.png', dpi=900, width=6, height=4)
-test = pd.concat([test4, trans_l, trans_s], axis=1)
-test.columns = ['phos_fc', 'trans_fc', 'trans_l', 'trans_s']
-formula = 'phos_fc~trans_l+trans_s+trans_fc'
-anova_results = anova_lm(ols(formula, data=test).fit())
-print ols(formula, data=test).fit().summary()
-print anova_results
+# test = pd.concat([test4, trans_l, trans_s], axis=1)
+# test.columns = ['phos_fc', 'trans_fc', 'trans_l', 'trans_s']
+# formula = 'phos_fc~trans_l+trans_s+trans_fc'
+# anova_results = anova_lm(ols(formula, data=test).fit())
+# print ols(formula, data=test).fit().summary()
+# print anova_results
