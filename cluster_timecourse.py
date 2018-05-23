@@ -28,8 +28,8 @@ class cluster_timecourse(object):
 
         # significant peptides
         # self.df = hdf.read(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm_new_0.05.h5")[0].replace(np.nan, 0.0)
-        # TODO p = 0.05
-        self.df = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm_new_0.1.csv", index_col=0).replace(np.nan, 0.0)
+        # TODO accept p = 0.1
+        self.df = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\maSigPro\sig_by_perm_new_0.3.csv", index_col=0).replace(np.nan, 0.0)
         # TODO a abnormal value : 'iTESEQAAGDsDEGVDSITTGGR'
         # L1       1.272
         # L2       0.736
@@ -168,6 +168,6 @@ if __name__ == '__main__':
     ctc = cluster_timecourse(n_cluster)
     ctc.cluster()
     ctc.tsne(legend=True)
-    ctc.fig.savefig(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_0.1.png", dpi=900)
-    ctc.draw_all_lines(savefile=r"C:\Users\evans\Dropbox\Shade\tsne\cluster{}_0.1.png")
-    ctc.dX_embedded.to_csv(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_2_0.1.csv")
+    ctc.fig.savefig(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_0.3.png", dpi=900)
+    ctc.draw_all_lines(savefile=r"C:\Users\evans\Dropbox\Shade\tsne\cluster{}_0.3.png")
+    ctc.dX_embedded.to_csv(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_2_0.3.csv")

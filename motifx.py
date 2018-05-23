@@ -2,7 +2,9 @@ import pandas as pd
 import hdf
 import re
 import numpy as np
+from funcs.fig.distribution import distribution
 from scipy.stats import chisquare
+import matplotlib.pyplot as plt
 all_length = pd.read_csv(r'C:\Users\evans\Dropbox\Shade\database\full_length.csv', index_col=0)
 sigs = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\tsne\tsne_2_0.1.csv", index_col=0)
 expr = hdf.read(r"C:\Users\evans\Dropbox\Shade\raw\jiaoshenmehaoen.h5")[0]
@@ -16,6 +18,9 @@ expr['motif21'] = all_length.loc[all_length.index.isin(
 motifs = hdf.read(r"C:\Users\evans\Dropbox\Shade\motifx\phoasphat_motifs.h5")[1]
 kinase_substrate = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\database\arabidopsis_kinase_substrate.txt", sep='\t', index_col='Target')
 kinase_substrate = kinase_substrate[-kinase_substrate['Kinase'].isin([np.nan])]
+name_cheat = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\database\go.csv", index_col=0)
+sigs['Annotations'] = [j if isinstance(j, str) else j[0] for j in [
+    name_cheat.loc[i, 'Annotations'] for i in sigs['Name']]]
 
 
 def phosphatase_motif_to_re(s):
@@ -73,9 +78,12 @@ def batch_motif_chi():
 
 
 def single_motif_peptides(motif):
-    print len([i for i in sigs.loc[sigs['label'] == 2].index if len(re.findall(motif, sigs.loc[i]['motif21'])) > 0])
-    print len([i for i in sigs.loc[sigs['label'] == 1].index if len(re.findall(motif, sigs.loc[i]['motif21'])) > 0])
-    return pd.Series([i[3:18] for i in sigs['motif21'] if len(re.findall(motif, i)) > 0])
+    # print len([i for i in sigs.loc[sigs['label'] == 2].index if len(re.findall(motif, sigs.loc[i]['motif21'])) > 0])
+    # print len([i for i in sigs.loc[sigs['label'] == 1].index if len(re.findall(motif, sigs.loc[i]['motif21'])) > 0])
+
+    temp = pd.Series([i for i in sigs['motif21']
+                      if len(re.findall(motif, i)) > 0])
+    return sigs.loc[sigs['motif21'].isin(temp)]
 
 
 def count_na(series):
@@ -128,10 +136,18 @@ if __name__ == '__main__':
     test = pd.DataFrame(test).set_index('motif')
     test
     test[test['p'] < 0.05]
+
+    test
+    # test.to_csv('fsjfl.csv')
+    # test2=test.dropna()
+    # distribution(test2['p'])
+    # plt.show()
     # single_motif_peptides('[LIV]\w[KRH]\w\w[st]\w\w\w[LIV]')
     # single_motif_peptides('Gs')
     # test=single_motif_peptides('[RK]\w\ws')
     # test=single_motif_peptides('sP[RK]')
+
+    single_motif_peptides('s\w[DE]').to_csv('fdsfa.csv')
 
     # kinase_substrate=pd.read_csv(r"C:\Users\evans\Dropbox\Shade\database\arabidopsis_kinase_substrate.txt",sep='\t',index_col='Target')
     # test=kinase_substrate.loc[kinase_substrate.index.isin(sigs['Name'])]

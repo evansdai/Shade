@@ -4,6 +4,7 @@ from funcs.fig.scatter import plot
 import matplotlib.pyplot as plt
 import seaborn as sns
 from funcs.fig.color import hex_to_rgba
+sns.set(font_scale=2.5, style="white", color_codes=True)
 
 
 def timecource_feature_rearrange(df, ts=[0, 0, 5, 5, 15, 15, 30, 30]):
@@ -51,28 +52,59 @@ class draw_timecourse(object):
 #     tc=hdf.read(r"C:\Users\evans\Dropbox\Shade\raw\timecourse.h5")[0]
 #     return tc.loc[tc['index'].isin(which)]
 
-def batch_draw_timecourse(df, outputroot=r'C:\Users\evans\Dropbox\Shade\figures\FIGURE4\\'):
+def batch_draw_timecourse(df, df_pos=None, outputroot=r'C:\Users\evans\Dropbox\Shade\figures\FIGURE4\\'):
+
+    if df_pos == True:
+        df_pos = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\raw\Profile_all2076_B_withlocation.csv", index_col=0)
     if 'Annotations' in df.columns:
         for i in df.index:
             if df.loc[i]['label'] == 1:
                 colr = '#3c6d95'
             else:
-                colr = '#3c9573'
-            anno = df.loc[i, 'Annotations']
+                colr = '#ad4a32'
+
             dtc = draw_timecourse(
                 which=i)
 
             dtc.draw(color=colr,
                      legend_loc='1', rm_legend=False)
-            dtc.fig.axes.legend([anno])
+            anno = df.loc[i, 'Annotations']
+            if not df_pos is None:
+                site = df_pos.loc[i, 'Phospho']
+                pos = df_pos.loc[i, 'Location']
+                # dtc.fig.axes.legend(['{}_{}{}'.format(anno, site, pos)])
+                dtc.fig.set_title('{}_{}{}'.format(anno, site, pos))
+            else:
+                # dtc.fig.axes.legend([anno])
+                dtc.fig.set_title(anno)
+
+            anno = anno.replace('/', '_')
+            dtc.fig.set_ylim(0, 2)
+            dtc.fig.set_xlabel('')
+            dtc.fig.set_ylabel('')
             dtc.fig.get_figure().savefig('{}{}_{}.png'.format(outputroot, anno, i))
+    else:
+        raise RuntimeError('Annotations not in df.columns')
 
 
 if __name__ == '__main__':
-    sigs = hdf.read(r"C:\Users\evans\Dropbox\Shade\raw\sigs.h5")[0]
-    batch_draw_timecourse(sigs)
+    # sns.set(font_scale=2.5, style="white", color_codes=True)
+    # sigs = hdf.read(r"C:\Users\evans\Dropbox\Shade\raw\sigs.h5")[0]
+    # batch_draw_timecourse(sigs, df_pos=True)
+    # sigs
+
+    sigs = hdf.read(r"C:\Users\evans\Dropbox\Shade\raw\jiaoshenmehaoen.h5")[0]
+    # endomemberane system
+    # sigs=sigs.loc[['gSSGISDDMESSsPR','aEsISDLENk','ssDSLSGTNELLNINSETPMk','ssSDVQMTk','tQsLNPk','SDVsSPEAk','sEsLGHR','lEASYsV','nISGSMQsPR','sDsQSELSSGNSDALAIEQR']]
+
+    sigs
+    sigs['label'] = 1
+    batch_draw_timecourse(sigs, df_pos=True)
 
     # dtc = draw_timecourse(
-    #     which=sigs.index[0])
-    #
+    # which=['gSSGISDDMESSsPR','aEsISDLENk','ssDSLSGTNELLNINSETPMk','ssSDVQMTk','tQsLNPk','SDVsSPEAk','sEsLGHR','lEASYsV','nISGSMQsPR','sDsQSELSSGNSDALAIEQR'])
     # dtc.draw(color=None, legend_loc='1', rm_legend=False)
+
+    # hdf.read(r"C:\Users\evans\Dropbox\Shade\raw\timecourse.h5")[0]
+    #
+    # hdf.read(filename)
