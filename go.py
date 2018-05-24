@@ -4,9 +4,11 @@ import seaborn as sns
 from drawlines import batch_draw_timecourse
 from scipy import stats
 import os
+from dup import dup_index_drop
+import numpy as np
 sns.set(font_scale=2.5, style="white", color_codes=True)
 # sigs = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\network\sigs.csv", index_col=0)
-sigs = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\network\sigs0.3.csv", index_col=0)
+# sigs = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\network\sigs0.3.csv", index_col=0)
 # TODO not significant
 # sigs = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\network\background.csv", index_col=0)
 
@@ -119,18 +121,19 @@ def go_label(goterm):
 class count_sig_in_goterm(object):
     """docstring for count_sig_in_goterm."""
 
-    def __init__(self):
+    def __init__(self, input):
         super(count_sig_in_goterm, self).__init__()
-        self.go = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\database\go.csv", index_col=0)
-        self.sig = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\network\sigs.csv", index_col=0)
+        self.go = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\database\go.csv", index_col=1)
+        # self.sig = pd.read_csv(r"C:\Users\evans\Dropbox\Shade\network\sigs.csv", index_col=0)
+        self.sig = input
         self.phos = pd.read_csv(r'C:\Users\evans\Dropbox\Shade\raw\allgene.csv', index_col=0)
-        self.sig_list = list(set(self.sig['Protein'].tolist()))
+        self.sig_list = list(set(self.sig['Name2'].tolist()))
         # TODO one gene could be count in both up list and down list, which is fine
-        self.sig_up_list = list(
-            set(self.sig.loc[self.sig['label'] == 2, 'Protein'].tolist()))
-        self.sig_down_list = list(
-            set(self.sig.loc[self.sig['label'] == 1, 'Protein'].tolist()))
-        self.phos_list = list(set(self.phos['Name'].tolist()))
+        # self.sig_up_list = list(
+        # set(self.sig.loc[self.sig['label'] == 2, 'Protein'].tolist()))
+        # self.sig_down_list = list(
+        # set(self.sig.loc[self.sig['label'] == 1, 'Protein'].tolist()))
+        self.phos_list = list(set(self.phos['Name2'].tolist()))
 
     def count(self, keyword=None):
         if not keyword is None:
@@ -139,25 +142,50 @@ class count_sig_in_goterm(object):
             go_key_all = go_key.loc[go_key.index.isin(self.phos_list)]
             return go_key_sig
         else:
-            print len(self.go.loc[self.sig['Protein']])
-            print len(self.go.loc[self.phos['Name']])
+            print len(self.go.loc[self.sig['Name2']])
+            print len(self.go.loc[self.phos['Name2']])
 
     def chi_one(self, goterm):
         go_one = self.go.loc[self.go['Term'] == goterm]
-        in_sig = go_one.loc[go_one.index.isin(self.sig_list)]
-        in_sig_up = go_one.loc[go_one.index.isin(self.sig_up_list)]
-        in_sig_down = go_one.loc[go_one.index.isin(self.sig_down_list)]
-        in_phos = go_one.loc[go_one.index.isin(self.phos_list)]
-        not_in_phos = go_one.loc[~go_one.index.isin(self.phos_list)]
-        all_in_phos = self.go.loc[self.go.index.isin(self.phos_list)]
-        all_not_in_phos = self.go.loc[~self.go.index.isin(self.phos_list)]
+        sig_go = go_one.loc[go_one.index.isin(self.sig_list)]
+        notsig_list = [i for i in self.phos_list if not i in self.sig_list]
+        notsig_go = go_one.loc[go_one.index.isin(notsig_list)]
+        # in_sig_up = go_one.loc[go_one.index.isin(self.sig_up_list)]
+        # in_sig_down = go_one.loc[go_one.index.isin(self.sig_down_list)]
+        # in_phos = go_one.loc[go_one.index.isin(self.phos_list)]
+        # not_in_phos = go_one.loc[~go_one.index.isin(self.phos_list)]
+        # all_in_phos = self.go.loc[self.go.index.isin(self.phos_list)]
+        # all_not_in_phos = self.go.loc[~self.go.index.isin(self.phos_list)]
 
-        print len(in_phos)
-        print len(not_in_phos)
-        print len(all_in_phos)
-        print len(all_not_in_phos)
-        print stats.chisquare([len(in_sig_up), len(in_sig_down)], [(len(in_sig_up) + len(in_sig_down)) / 2.0, (len(in_sig_up) + len(in_sig_down)) / 2.0])
-        print stats.chisquare([len(in_phos), len(not_in_phos)], [(len(in_phos) + len(not_in_phos)) / 2.0, (len(in_phos) + len(not_in_phos)) / 2.0])
+        a = len(sig_go)
+        b = len(self.sig_list) - len(sig_go)
+        c = len(notsig_go)
+        d = len(notsig_list) - len(notsig_go)
+
+        # print stats.chisquare([len(in_sig_up), len(in_sig_down)], [(len(in_sig_up) + len(in_sig_down)) / 2.0, (len(in_sig_up) + len(in_sig_down)) / 2.0])
+        chi_res = stats.chisquare([a, b],
+                                  [c / (0.0 + c + d) * (a + b), d / (0.0 + c + d) * (a + b)])
+
+        sig_go['Protein'].tolist()
+        sig_go_str = ''.join([i + ';' for i in sig_go['Protein'].tolist()])
+        if a / (b + 0.0) > c / (d + 0.0) and a > 2:
+            return pd.Series([-np.log10(chi_res[1]), a, b, c, d, sig_go_str],
+                             index=['lod', 'a', 'b', 'c', 'd', 'list_of_protein'])
+            # TODO add gene names into the series
+
+        elif a / (b + 0.0) < c / (d + 0.0) and a > 2:
+            return pd.Series([np.log10(chi_res[1]), a, b, c, d, sig_go_str],
+                             index=['lod', 'a', 'b', 'c', 'd', 'list_of_protein'])
+        else:
+            return pd.Series([np.nan, a, b, c, d, sig_go_str],
+                             index=['lod', 'a', 'b', 'c', 'd', 'list_of_protein'])
+        # print stats.chisquare([len(in_phos), len(not_in_phos)], [(len(in_phos) + len(not_in_phos)) / 2.0, (len(in_phos) + len(not_in_phos)) / 2.0])
+
+    def batch_chi(self):
+        res = []
+        all_go_terms = list(set(self.go['Term'].tolist()))
+        res = map(self.chi_one, all_go_terms)
+        return pd.DataFrame(res, all_go_terms)
 
 
 if __name__ == '__main__':

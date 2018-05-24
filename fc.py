@@ -2,7 +2,7 @@ import pandas as pd
 import hdf
 import subprocess
 from delete import del_row_with_zero
-
+from go import count_sig_in_goterm
 # def copy2clip(txt):
 #     if isinstance(txt, str):
 #         s=txt
@@ -35,6 +35,16 @@ class foldchange(object):
 
 if __name__ == '__main__':
     test = foldchange()
-    temp = test.fc('30', fc=1.5)
-    len(temp)
-    temp.to_csv('fdsf30.csv')
+
+    for i in ['5', '15', '30']:
+        temp = test.fc(i, fc=1.5)
+        # temp.to_csv('fdsf30.csv')
+
+        test2 = count_sig_in_goterm(input=temp)
+        # test2.count(keyword=None)
+        # test2.chi_one('response to abscisic acid')
+
+        test3 = test2.batch_chi()
+        test3
+        test3.columns
+        test3.dropna().to_csv('search_allgo_{}.csv'.format(i))
